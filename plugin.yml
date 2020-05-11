@@ -1,0 +1,8 @@
+name: NoMoreEsp
+main: tw.mics.spigot.plugin.nomoreesp.NoMoreESP
+version: vMineFS
+description: desc
+author: Mics
+website: https://mics.tw
+
+depend: [ProtocolLib,MineStrike,FastAsyncWorldEdit]
