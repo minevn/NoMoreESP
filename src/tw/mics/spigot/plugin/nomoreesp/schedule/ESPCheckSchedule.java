@@ -115,7 +115,7 @@ public class ESPCheckSchedule {
 			return;
 		List<Player> targets = null;
 		GameTeam opposite = null;
-		if (game.isZombieGame()) {
+		if (!game.isZombieGame()) {
 			if (ms.getManager().getTeam(game, player) == game.getTeamA())
 				opposite = game.getTeamB();
 			else
