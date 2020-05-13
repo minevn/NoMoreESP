@@ -1,5 +1,7 @@
 package tw.mics.spigot.plugin.nomoreesp.schedule;
 
+import java.util.List;
+
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -111,18 +113,24 @@ public class ESPCheckSchedule {
 		}
 		if (player.hasPermission("ms.walldebug"))
 			return;
+		List<Player> targets = null;
 		GameTeam opposite = null;
-		if (ms.getManager().getTeam(game, player) == game.getTeamA())
-			opposite = game.getTeamB();
-		else
-			opposite = game.getTeamA();
-		if (opposite == null)
-			return;
+		if (game.isZombieGame()) {
+			if (ms.getManager().getTeam(game, player) == game.getTeamA())
+				opposite = game.getTeamB();
+			else
+				opposite = game.getTeamA();
+			if (opposite == null)
+				return;
+			targets = opposite.getPlayers();
+		} else
+			targets = game.getPlayers();
 		boolean force = (game.getSpectators().contains(player) && !(game instanceof Competitive))
-				|| game.getState() == GameState.END || (game.isZombieGame() && game.getState() == GameState.ROUND);
-		for (Player target : opposite.getPlayers())
+				|| game.getState() == GameState.END;
+		for (Player target : targets)
 			if (target.getWorld() == player.getWorld())
-				checkLookable(player, target, force, game);
+				checkLookable(player, target,
+						force && (!game.isZombieGame() || ms.getManager().sameTeam(game, player, target)), game);
 	}
 
 	public void stop() {
@@ -137,7 +145,7 @@ public class ESPCheckSchedule {
 			if (player.hasPermission("ms.walldebug"))
 				continue;
 			boolean force = (game.getSpectators().contains(player) && !(game instanceof Competitive))
-					|| game.getState() == GameState.END || (game.isZombieGame() && game.getState() == GameState.ROUND);
+					|| game.getState() == GameState.END || (game.isZombieGame() && game.isRoundEnding());
 			for (Player target : oppositeTeam.getPlayers())
 				if (target.getWorld() == player.getWorld())
 					checkLookable(player, target, force, game);
