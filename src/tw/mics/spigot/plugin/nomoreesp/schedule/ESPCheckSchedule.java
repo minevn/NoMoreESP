@@ -128,7 +128,7 @@ public class ESPCheckSchedule {
 		boolean force = (game.getSpectators().contains(player) && !(game instanceof Competitive))
 				|| game.getState() == GameState.END;
 		for (Player target : targets)
-			if (target.getWorld() == player.getWorld())
+			if (target != player && target.getWorld() == player.getWorld())
 				checkLookable(player, target,
 						force && (!game.isZombieGame() || ms.getManager().sameTeam(game, player, target)), game);
 	}
