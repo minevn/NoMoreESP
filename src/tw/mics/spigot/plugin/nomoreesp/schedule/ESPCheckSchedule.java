@@ -113,24 +113,12 @@ public class ESPCheckSchedule {
 		}
 		if (player.hasPermission("ms.walldebug"))
 			return;
-		List<Player> targets = null;
-		GameTeam opposite = null;
-		if (!game.isZombieGame()) {
-			if (ms.getManager().getTeam(game, player) == game.getTeamA())
-				opposite = game.getTeamB();
-			else
-				opposite = game.getTeamA();
-			if (opposite == null)
-				return;
-			targets = opposite.getPlayers();
-		} else
-			targets = game.getPlayers();
+		List<Player> targets = game.getPlayers();
 		boolean force = (game.getSpectators().contains(player) && !(game instanceof Competitive))
 				|| game.getState() == GameState.END;
 		for (Player target : targets)
 			if (target != player && target.getWorld() == player.getWorld())
-				checkLookable(player, target,
-						force && (!game.isZombieGame() || ms.getManager().sameTeam(game, player, target)), game);
+				checkLookable(player, target, force && ms.getManager().sameTeam(game, player, target), game);
 	}
 
 	public void stop() {
