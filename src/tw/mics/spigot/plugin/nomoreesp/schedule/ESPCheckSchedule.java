@@ -118,7 +118,7 @@ public class ESPCheckSchedule {
 				|| game.getState() == GameState.END;
 		for (Player target : targets)
 			if (target != player && target.getWorld() == player.getWorld())
-				checkLookable(player, target, force && ms.getManager().sameTeam(game, player, target), game);
+				checkLookable(player, target, force || ms.getManager().sameTeam(game, player, target), game);
 	}
 
 	public void stop() {
