@@ -1,7 +1,10 @@
 *.class
 .classpath
 .project
+*.iml
 /.settings/
+/.idea/
+/target/
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 

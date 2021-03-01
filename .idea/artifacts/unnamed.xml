@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="unnamed">
-    <output-path>$USER_HOME$/OneDrive/Desktop/finished</output-path>
-    <root id="archive" name="NoMoreESP.jar">
-      <element id="module-output" name="NoMoreESP" />
-    </root>
-  </artifact>
-</component>
