@@ -1,28 +1,24 @@
 package tw.mics.spigot.plugin.nomoreesp.schedule;
 
-import java.util.List;
-
+import net.minefs.MineStrike.Handler.GameState;
+import net.minefs.MineStrike.Handler.GameTeam;
+import net.minefs.MineStrike.Main;
+import net.minefs.MineStrike.Modes.Competitive;
+import net.minefs.MineStrike.Modes.Game;
+import net.minefs.MineStrike.Modes.ZombieEscape;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_12_R1.CraftWorld;
 import org.bukkit.entity.Player;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
-
-import net.minecraft.server.v1_12_R1.AxisAlignedBB;
-import net.minecraft.server.v1_12_R1.BlockPosition;
-import net.minecraft.server.v1_12_R1.WorldServer;
-import net.minefs.MineStrike.Main;
-import net.minefs.MineStrike.Handler.GameState;
-import net.minefs.MineStrike.Handler.GameTeam;
-import net.minefs.MineStrike.Modes.Competitive;
-import net.minefs.MineStrike.Modes.Game;
-import net.minefs.MineStrike.Modes.ZombieEscape;
 import tw.mics.spigot.plugin.nomoreesp.Config;
 import tw.mics.spigot.plugin.nomoreesp.EntityHider;
 import tw.mics.spigot.plugin.nomoreesp.NoMoreESP;
+
+import java.util.List;
 
 public class ESPCheckSchedule {
 	NoMoreESP plugin;
@@ -247,8 +243,8 @@ public class ESPCheckSchedule {
 			Material m = block.getType();
 			if ((!block.isEmpty() && !block.isLiquid() && hasIntersection(block, direction.toVector())
 					&& !m.isTransparent() && m != Material.BARRIER && !m.name().contains("FENCE")
-					&& m != Material.TRAP_DOOR && m != Material.IRON_TRAPDOOR)
-					|| (m == Material.CROPS && !game.isZombieGame()))
+					&& !m.name().endsWith("TRAPDOOR"))
+					|| (m == Material.WHEAT && !game.isZombieGame()))
 				return block;
 			direction.setX(x + n * n2);
 			direction.setY(y + n * cos);
@@ -259,13 +255,11 @@ public class ESPCheckSchedule {
 	}
 
 	public boolean hasIntersection(Block b, Vector position) {
-		BlockPosition pos = new BlockPosition(b.getX(), b.getY(), b.getZ());
-		WorldServer world = ((CraftWorld) b.getWorld()).getHandle();
-		AxisAlignedBB box = world.getType(pos).d(world, pos);
-		if (box == null)
-			return false;
-		Vector min = new Vector(pos.getX() + box.a, pos.getY() + box.b, pos.getZ() + box.c);
-		Vector max = new Vector(pos.getX() + box.d, pos.getY() + box.e, pos.getZ() + box.f);
+		BoundingBox box = b.getBoundingBox();
+		return hasIntersection(box.getMin(), box.getMax(), position);
+	}
+
+	public boolean hasIntersection(Vector min, Vector max, Vector position) {
 		if (position.getX() < min.getX() || position.getX() > max.getX())
 			return false;
 		if (position.getY() < min.getY() || position.getY() > max.getY())

@@ -1,35 +1,20 @@
 package tw.mics.spigot.plugin.nomoreesp;
 
-import static com.comphenix.protocol.PacketType.Play.Server.ANIMATION;
-import static com.comphenix.protocol.PacketType.Play.Server.ATTACH_ENTITY;
-import static com.comphenix.protocol.PacketType.Play.Server.BED;
-import static com.comphenix.protocol.PacketType.Play.Server.BLOCK_BREAK_ANIMATION;
-import static com.comphenix.protocol.PacketType.Play.Server.COLLECT;
-import static com.comphenix.protocol.PacketType.Play.Server.ENTITY_EFFECT;
-import static com.comphenix.protocol.PacketType.Play.Server.ENTITY_EQUIPMENT;
-import static com.comphenix.protocol.PacketType.Play.Server.ENTITY_HEAD_ROTATION;
-import static com.comphenix.protocol.PacketType.Play.Server.ENTITY_LOOK;
-import static com.comphenix.protocol.PacketType.Play.Server.ENTITY_METADATA;
-import static com.comphenix.protocol.PacketType.Play.Server.ENTITY_STATUS;
-import static com.comphenix.protocol.PacketType.Play.Server.ENTITY_TELEPORT;
-import static com.comphenix.protocol.PacketType.Play.Server.ENTITY_VELOCITY;
-import static com.comphenix.protocol.PacketType.Play.Server.NAMED_ENTITY_SPAWN;
-import static com.comphenix.protocol.PacketType.Play.Server.REL_ENTITY_MOVE;
-import static com.comphenix.protocol.PacketType.Play.Server.REMOVE_ENTITY_EFFECT;
-import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY;
-import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_EXPERIENCE_ORB;
-import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_LIVING;
-import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_PAINTING;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_12_R1.inventory.CraftItemStack;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
+import com.google.common.base.Preconditions;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.server.v1_16_R3.EntityPlayer;
+import net.minecraft.server.v1_16_R3.EnumItemSlot;
+import net.minecraft.server.v1_16_R3.PacketPlayOutEntityDestroy;
+import net.minecraft.server.v1_16_R3.PacketPlayOutEntityEquipment;
+import net.minecraft.server.v1_16_R3.PacketPlayOutEntityHeadRotation;
+import net.minecraft.server.v1_16_R3.PacketPlayOutNamedEntitySpawn;
+import net.minecraft.server.v1_16_R3.PlayerConnection;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -38,23 +23,18 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketEvent;
-import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-import net.minecraft.server.v1_12_R1.EntityPlayer;
-import net.minecraft.server.v1_12_R1.EnumItemSlot;
-import net.minecraft.server.v1_12_R1.PacketPlayOutEntityDestroy;
-import net.minecraft.server.v1_12_R1.PacketPlayOutEntityEquipment;
-import net.minecraft.server.v1_12_R1.PacketPlayOutEntityHeadRotation;
-import net.minecraft.server.v1_12_R1.PacketPlayOutNamedEntitySpawn;
-import net.minecraft.server.v1_12_R1.PlayerConnection;
+import static com.comphenix.protocol.PacketType.Play.Server.*;
 
 public class EntityHider implements Listener {
 	private NoMoreESP plugin;
@@ -95,25 +75,15 @@ public class EntityHider implements Listener {
 			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(e));
 			connection.sendPacket(
 					new PacketPlayOutEntityHeadRotation(e, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			ItemStack helmet = (entity.getInventory().getHelmet() != null) ? entity.getInventory().getHelmet().clone()
-					: null;
-			connection.sendPacket(
-					new PacketPlayOutEntityEquipment(e.getId(), EnumItemSlot.HEAD, CraftItemStack.asNMSCopy(helmet)));
-			ItemStack chestplate = (entity.getInventory().getChestplate() != null)
-					? entity.getInventory().getChestplate().clone()
-					: null;
-			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), EnumItemSlot.CHEST,
-					CraftItemStack.asNMSCopy(chestplate)));
-			ItemStack mainhand = (entity.getInventory().getItemInMainHand() != null)
-					? entity.getInventory().getItemInMainHand().clone()
-					: null;
-			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), EnumItemSlot.MAINHAND,
-					CraftItemStack.asNMSCopy(mainhand)));
-			ItemStack offhand = (entity.getInventory().getItemInOffHand() != null)
-					? entity.getInventory().getItemInOffHand().clone()
-					: null;
-			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), EnumItemSlot.OFFHAND,
-					CraftItemStack.asNMSCopy(offhand)));
+			var nmsP = ((CraftPlayer) observer).getHandle();
+			List<Pair<EnumItemSlot, net.minecraft.server.v1_16_R3.ItemStack>> eq = new ArrayList<>();
+			for (var slot : EnumItemSlot.values()) {
+				var item = nmsP.getEquipment(slot);
+				if (item != null) {
+					eq.add(new Pair(slot, item));
+				}
+			}
+			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), eq));
 			/*
 			 * List<Player> player = Arrays.asList(observer);
 			 * Bukkit.getScheduler().runTask(plugin, new Runnable() { public void run() {
@@ -137,25 +107,15 @@ public class EntityHider implements Listener {
 			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(e));
 			connection.sendPacket(
 					new PacketPlayOutEntityHeadRotation(e, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			ItemStack helmet = (entity.getInventory().getHelmet() != null) ? entity.getInventory().getHelmet().clone()
-					: null;
-			connection.sendPacket(
-					new PacketPlayOutEntityEquipment(e.getId(), EnumItemSlot.HEAD, CraftItemStack.asNMSCopy(helmet)));
-			ItemStack chestplate = (entity.getInventory().getChestplate() != null)
-					? entity.getInventory().getChestplate().clone()
-					: null;
-			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), EnumItemSlot.CHEST,
-					CraftItemStack.asNMSCopy(chestplate)));
-			ItemStack mainhand = (entity.getInventory().getItemInMainHand() != null)
-					? entity.getInventory().getItemInMainHand().clone()
-					: null;
-			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), EnumItemSlot.MAINHAND,
-					CraftItemStack.asNMSCopy(mainhand)));
-			ItemStack offhand = (entity.getInventory().getItemInOffHand() != null)
-					? entity.getInventory().getItemInOffHand().clone()
-					: null;
-			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), EnumItemSlot.OFFHAND,
-					CraftItemStack.asNMSCopy(offhand)));
+			var nmsP = ((CraftPlayer) observer).getHandle();
+			List<Pair<EnumItemSlot, net.minecraft.server.v1_16_R3.ItemStack>> eq = new ArrayList<>();
+			for (var slot : EnumItemSlot.values()) {
+				var item = nmsP.getEquipment(slot);
+				if (item != null) {
+					eq.add(new Pair(slot, item));
+				}
+			}
+			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), eq));
 		}
 		return hiddenBefore;
 	}
