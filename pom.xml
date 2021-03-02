@@ -29,7 +29,7 @@
         <dependency>
             <groupId>minevn.depend</groupId>
             <artifactId>paper</artifactId>
-            <version>1.12.2-b1606</version>
+            <version>1.16.5-b470</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
