@@ -1,8 +1,7 @@
 package tw.mics.spigot.plugin.nomoreesp;
 
-import org.bukkit.plugin.java.JavaPlugin;
-
 import net.minefs.MineStrike.Main;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class NoMoreESP extends JavaPlugin {
 	private static NoMoreESP INSTANCE;
@@ -16,9 +15,9 @@ public class NoMoreESP extends JavaPlugin {
 		Config.load();
 
 		hider = new EntityHider(this);
-		if (Config.SEND_FAKE_HEALTH.getBoolean()) {
-			new HealthHider(this);
-		}
+//		if (Config.SEND_FAKE_HEALTH.getBoolean()) {
+//			new HealthHider(this);
+//		}
 	}
 
 	public void log(String str, Object... args) {
