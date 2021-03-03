@@ -7,7 +7,6 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
-import net.minecraft.server.v1_16_R3.PacketPlayOutSpawnEntityLiving;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -41,7 +40,6 @@ public class HealthHider implements Listener {
 		return new PacketAdapter(plugin, ENTITY_PACKETS) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
-				PacketPlayOutSpawnEntityLiving zz;
 				PacketContainer packet = event.getPacket();
 				Entity e = packet.getEntityModifier(event).read(0);
 				if (e instanceof LivingEntity && packet.getWatchableCollectionModifier().read(0) != null
