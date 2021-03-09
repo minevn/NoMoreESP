@@ -75,7 +75,7 @@ public class EntityHider implements Listener {
 			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(e));
 			connection.sendPacket(
 					new PacketPlayOutEntityHeadRotation(e, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			var nmsP = ((CraftPlayer) observer).getHandle();
+			var nmsP = ((CraftPlayer) entity).getHandle();
 			List<Pair<EnumItemSlot, net.minecraft.server.v1_16_R3.ItemStack>> eq = new ArrayList<>();
 			for (var slot : EnumItemSlot.values()) {
 				var item = nmsP.getEquipment(slot);
