@@ -243,7 +243,7 @@ public class ESPCheckSchedule {
 			Material m = block.getType();
 			if ((!block.isEmpty() && !block.isLiquid() && hasIntersection(block, direction.toVector())
 					&& !m.isTransparent() && m != Material.BARRIER && !m.name().contains("FENCE")
-					&& !m.name().endsWith("TRAPDOOR"))
+					&& !m.name().endsWith("TRAPDOOR")) && m != Material.IRON_BARS && !m.name().contains("GLASS")
 					|| (m == Material.WHEAT && !game.isZombieGame()))
 				return block;
 			direction.setX(x + n * n2);
