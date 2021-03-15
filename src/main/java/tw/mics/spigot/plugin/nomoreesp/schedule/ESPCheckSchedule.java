@@ -147,6 +147,10 @@ public class ESPCheckSchedule {
 		double distance = loc.distance(target_loc);
 		if (distance > PLAYER_TRACKING_RANGE)
 			return;
+		if (target.getGameMode() == GameMode.SPECTATOR) {
+			hider.hideEntity(player, target);
+			return;
+		}
 		if (distance < 1.5 && player.getGameMode() != GameMode.SPECTATOR && game instanceof ZombieEscape
 				&& game.getMain().getManager().sameTeam(game, player, target)) {
 			hider.hideEntity(player, target);
