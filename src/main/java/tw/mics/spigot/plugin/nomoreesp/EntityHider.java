@@ -12,6 +12,7 @@ import net.minecraft.server.v1_16_R3.EnumItemSlot;
 import net.minecraft.server.v1_16_R3.PacketPlayOutEntityDestroy;
 import net.minecraft.server.v1_16_R3.PacketPlayOutEntityEquipment;
 import net.minecraft.server.v1_16_R3.PacketPlayOutEntityHeadRotation;
+import net.minecraft.server.v1_16_R3.PacketPlayOutEntityMetadata;
 import net.minecraft.server.v1_16_R3.PacketPlayOutNamedEntitySpawn;
 import net.minecraft.server.v1_16_R3.PlayerConnection;
 import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
@@ -55,27 +56,26 @@ public class EntityHider implements Listener {
 	}
 
 	/**
-	 * Allow the observer to see an entity that was previously hidden.
+	 * Allow the viewer to see an entity that was previously hidden.
 	 * 
-	 * @param observer - the observer.
+	 * @param viewer - the viewer.
 	 * @param entity   - the entity to show.
 	 * @return TRUE if the entity was hidden before, FALSE otherwise.
 	 */
-	public synchronized boolean showEntity(Player observer, Player entity) {
-		validate(observer, entity);
-		boolean hiddenBefore = !setVisibility(observer, entity.getEntityId(), true);
+	public synchronized boolean showEntity(Player viewer, Player entity) {
+		validate(viewer, entity);
+		boolean hiddenBefore = !setVisibility(viewer, entity.getEntityId(), true);
 		if (entity.isDead()) {
 			removeEntity(entity);
 			return hiddenBefore;
 		}
 		// Resend packets
 		if (manager != null && hiddenBefore) {
-			EntityPlayer e = ((CraftPlayer) entity).getHandle();
-			PlayerConnection connection = ((CraftPlayer) observer).getHandle().playerConnection;
-			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(e));
+			EntityPlayer nmsP = ((CraftPlayer) entity).getHandle();
+			PlayerConnection connection = ((CraftPlayer) viewer).getHandle().playerConnection;
+			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(nmsP));
 			connection.sendPacket(
-					new PacketPlayOutEntityHeadRotation(e, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			var nmsP = ((CraftPlayer) entity).getHandle();
+					new PacketPlayOutEntityHeadRotation(nmsP, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
 			List<Pair<EnumItemSlot, net.minecraft.server.v1_16_R3.ItemStack>> eq = new ArrayList<>();
 			for (var slot : EnumItemSlot.values()) {
 				var item = nmsP.getEquipment(slot);
@@ -83,9 +83,13 @@ public class EntityHider implements Listener {
 					eq.add(new Pair(slot, item));
 				}
 			}
-			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), eq));
+			connection.sendPacket(new PacketPlayOutEntityEquipment(nmsP.getId(), eq));
+//			DataWatcher watcher = nmsP.getDataWatcher();
+//			Byte b = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
+//			watcher.set(DataWatcherRegistry.a.a(16), (byte) b);
+			connection.sendPacket(new PacketPlayOutEntityMetadata(nmsP.getId(), nmsP.getDataWatcher(), true));
 			/*
-			 * List<Player> player = Arrays.asList(observer);
+			 * List<Player> player = Arrays.asList(viewer);
 			 * Bukkit.getScheduler().runTask(plugin, new Runnable() { public void run() {
 			 * try { manager.updateEntity(entity, player); } catch (IllegalArgumentException
 			 * e) { } } });
@@ -94,20 +98,20 @@ public class EntityHider implements Listener {
 		return hiddenBefore;
 	}
 
-	public synchronized boolean forceShowEntity(Player observer, Player entity) {
-		validate(observer, entity);
-		boolean hiddenBefore = !setVisibility(observer, entity.getEntityId(), true);
+	public synchronized boolean forceShowEntity(Player viewer, Player entity) {
+		validate(viewer, entity);
+		boolean hiddenBefore = !setVisibility(viewer, entity.getEntityId(), true);
 		if (entity.isDead()) {
 			removeEntity(entity);
 			return hiddenBefore;
 		}
 		if (manager != null) {
-			EntityPlayer e = ((CraftPlayer) entity).getHandle();
-			PlayerConnection connection = ((CraftPlayer) observer).getHandle().playerConnection;
-			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(e));
+			EntityPlayer nmsP = ((CraftPlayer) entity).getHandle();
+			PlayerConnection connection = ((CraftPlayer) viewer).getHandle().playerConnection;
+			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(nmsP));
 			connection.sendPacket(
-					new PacketPlayOutEntityHeadRotation(e, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			var nmsP = ((CraftPlayer) observer).getHandle();
+					new PacketPlayOutEntityHeadRotation(nmsP, (byte)
+							((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
 			List<Pair<EnumItemSlot, net.minecraft.server.v1_16_R3.ItemStack>> eq = new ArrayList<>();
 			for (var slot : EnumItemSlot.values()) {
 				var item = nmsP.getEquipment(slot);
@@ -115,7 +119,11 @@ public class EntityHider implements Listener {
 					eq.add(new Pair(slot, item));
 				}
 			}
-			connection.sendPacket(new PacketPlayOutEntityEquipment(e.getId(), eq));
+			connection.sendPacket(new PacketPlayOutEntityEquipment(nmsP.getId(), eq));
+//			DataWatcher watcher = nmsP.getDataWatcher();
+//			byte b = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
+//			watcher.set(DataWatcherRegistry.a.a(16), b);
+			connection.sendPacket(new PacketPlayOutEntityMetadata(nmsP.getId(), nmsP.getDataWatcher(), true));
 		}
 		return hiddenBefore;
 	}
