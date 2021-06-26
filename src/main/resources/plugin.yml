@@ -5,4 +5,4 @@ description: desc
 author: Mics
 website: https://mics.tw
 api-version: 1.16
-depend: [ProtocolLib,MineStrike,FastAsyncWorldEdit]
+depend: [ProtocolLib,MineStrike]

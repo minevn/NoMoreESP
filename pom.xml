@@ -44,11 +44,11 @@
             <version>4.6.0</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>minevn.depend</groupId>
-            <artifactId>FastAsyncWorldEdit</artifactId>
-            <version>18.2</version>
-            <scope>provided</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>minevn.depend</groupId>-->
+<!--            <artifactId>FastAsyncWorldEdit</artifactId>-->
+<!--            <version>18.2</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
     </dependencies>
 </project>
