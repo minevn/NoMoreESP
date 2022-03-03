@@ -7,15 +7,12 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.base.Preconditions;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.server.v1_16_R3.EntityPlayer;
-import net.minecraft.server.v1_16_R3.EnumItemSlot;
-import net.minecraft.server.v1_16_R3.PacketPlayOutEntityDestroy;
-import net.minecraft.server.v1_16_R3.PacketPlayOutEntityEquipment;
-import net.minecraft.server.v1_16_R3.PacketPlayOutEntityHeadRotation;
-import net.minecraft.server.v1_16_R3.PacketPlayOutEntityMetadata;
-import net.minecraft.server.v1_16_R3.PacketPlayOutNamedEntitySpawn;
-import net.minecraft.server.v1_16_R3.PlayerConnection;
-import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
+import net.minecraft.network.protocol.game.*;
+import net.minecraft.server.level.EntityPlayer;
+import net.minecraft.server.network.PlayerConnection;
+import net.minecraft.world.entity.EnumItemSlot;
+import net.minecraft.world.item.ItemStack;
+import org.bukkit.craftbukkit.v1_18_R2.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,13 +23,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.comphenix.protocol.PacketType.Play.Server.*;
@@ -72,22 +63,22 @@ public class EntityHider implements Listener {
 		// Resend packets
 		if (manager != null && hiddenBefore) {
 			EntityPlayer nmsP = ((CraftPlayer) entity).getHandle();
-			PlayerConnection connection = ((CraftPlayer) viewer).getHandle().playerConnection;
-			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(nmsP));
-			connection.sendPacket(
+			PlayerConnection connection = ((CraftPlayer) viewer).getHandle().b;
+			connection.a(new PacketPlayOutNamedEntitySpawn(nmsP));
+			connection.a(
 					new PacketPlayOutEntityHeadRotation(nmsP, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			List<Pair<EnumItemSlot, net.minecraft.server.v1_16_R3.ItemStack>> eq = new ArrayList<>();
+			List<Pair<EnumItemSlot, ItemStack>> eq = new ArrayList<>();
 			for (var slot : EnumItemSlot.values()) {
-				var item = nmsP.getEquipment(slot);
+				var item = nmsP.b(slot);
 				if (item != null) {
 					eq.add(new Pair(slot, item));
 				}
 			}
-			connection.sendPacket(new PacketPlayOutEntityEquipment(nmsP.getId(), eq));
+			connection.a(new PacketPlayOutEntityEquipment(nmsP.at(), eq));
 //			DataWatcher watcher = nmsP.getDataWatcher();
 //			Byte b = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
 //			watcher.set(DataWatcherRegistry.a.a(16), (byte) b);
-			connection.sendPacket(new PacketPlayOutEntityMetadata(nmsP.getId(), nmsP.getDataWatcher(), true));
+			connection.a(new PacketPlayOutEntityMetadata(nmsP.ae(), nmsP.ai(), true));
 			/*
 			 * List<Player> player = Arrays.asList(viewer);
 			 * Bukkit.getScheduler().runTask(plugin, new Runnable() { public void run() {
@@ -107,23 +98,23 @@ public class EntityHider implements Listener {
 		}
 		if (manager != null) {
 			EntityPlayer nmsP = ((CraftPlayer) entity).getHandle();
-			PlayerConnection connection = ((CraftPlayer) viewer).getHandle().playerConnection;
-			connection.sendPacket(new PacketPlayOutNamedEntitySpawn(nmsP));
-			connection.sendPacket(
+			PlayerConnection connection = ((CraftPlayer) viewer).getHandle().b;
+			connection.a(new PacketPlayOutNamedEntitySpawn(nmsP));
+			connection.a(
 					new PacketPlayOutEntityHeadRotation(nmsP, (byte)
 							((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			List<Pair<EnumItemSlot, net.minecraft.server.v1_16_R3.ItemStack>> eq = new ArrayList<>();
+			List<Pair<EnumItemSlot, net.minecraft.world.item.ItemStack>> eq = new ArrayList<>();
 			for (var slot : EnumItemSlot.values()) {
-				var item = nmsP.getEquipment(slot);
+				var item = nmsP.b(slot);
 				if (item != null) {
 					eq.add(new Pair(slot, item));
 				}
 			}
-			connection.sendPacket(new PacketPlayOutEntityEquipment(nmsP.getId(), eq));
+			connection.a(new PacketPlayOutEntityEquipment(nmsP.ae(), eq));
 //			DataWatcher watcher = nmsP.getDataWatcher();
 //			byte b = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
 //			watcher.set(DataWatcherRegistry.a.a(16), b);
-			connection.sendPacket(new PacketPlayOutEntityMetadata(nmsP.getId(), nmsP.getDataWatcher(), true));
+			connection.a(new PacketPlayOutEntityMetadata(nmsP.ae(), nmsP.ai(), true));
 		}
 		return hiddenBefore;
 	}
@@ -152,20 +143,18 @@ public class EntityHider implements Listener {
 			 * RuntimeException("Cannot send server packet.", e); }
 			 */
 			// EntityPlayer e = ((CraftPlayer) entity).getHandle();
-			PlayerConnection connection = ((CraftPlayer) observer).getHandle().playerConnection;
-			connection.sendPacket(new PacketPlayOutEntityDestroy(entity.getEntityId()));
+			PlayerConnection connection = ((CraftPlayer) observer).getHandle().b;
+			connection.a(new PacketPlayOutEntityDestroy(entity.getEntityId()));
 		}
 		return;
 	}
 
 	public synchronized void forceHideEntity(Player observer, Player entity) {
-		if (observer.hasPermission("ms.walldebug"))
-			return;
+		if (observer.hasPermission("ms.walldebug")) return;
 		validate(observer, entity);
 		setVisibility(observer, entity.getEntityId(), false);
-		PlayerConnection connection = ((CraftPlayer) observer).getHandle().playerConnection;
-		connection.sendPacket(new PacketPlayOutEntityDestroy(entity.getEntityId()));
-		return;
+		PlayerConnection connection = ((CraftPlayer) observer).getHandle().b;
+		connection.a(new PacketPlayOutEntityDestroy(entity.getEntityId()));
 	}
 
 	public boolean isVisible(Player player, Entity entity) {
@@ -184,7 +173,7 @@ public class EntityHider implements Listener {
 	 * Set the visibility status of a given entity for a particular observer.
 	 * 
 	 * @param observer - the observer player.
-	 * @param entity   - ID of the entity that will be hidden or made visible.
+	 * @param entityID   - ID of the entity that will be hidden or made visible.
 	 * @param visible  - TRUE if the entity should be made visible, FALSE if not.
 	 * @return TRUE if the entity was visible before this method call, FALSE
 	 *         otherwise.
