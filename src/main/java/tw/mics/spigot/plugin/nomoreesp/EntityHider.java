@@ -8,9 +8,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.base.Preconditions;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.network.protocol.game.*;
-import net.minecraft.server.level.EntityPlayer;
-import net.minecraft.server.network.PlayerConnection;
-import net.minecraft.world.entity.EnumItemSlot;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import org.bukkit.craftbukkit.v1_18_R2.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
@@ -62,23 +60,20 @@ public class EntityHider implements Listener {
 		}
 		// Resend packets
 		if (manager != null && hiddenBefore) {
-			EntityPlayer nmsP = ((CraftPlayer) entity).getHandle();
-			PlayerConnection connection = ((CraftPlayer) viewer).getHandle().b;
-			connection.a(new PacketPlayOutNamedEntitySpawn(nmsP));
-			connection.a(
-					new PacketPlayOutEntityHeadRotation(nmsP, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			List<Pair<EnumItemSlot, ItemStack>> eq = new ArrayList<>();
-			for (var slot : EnumItemSlot.values()) {
-				var item = nmsP.b(slot);
-				if (item != null) {
-					eq.add(new Pair(slot, item));
-				}
+			var nmsP = ((CraftPlayer) entity).getHandle();
+			var connection = ((CraftPlayer) viewer).getHandle().connection;
+			connection.send(new ClientboundAddPlayerPacket(nmsP));
+			connection.send(new ClientboundRotateHeadPacket(nmsP, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
+			List<Pair<EquipmentSlot, ItemStack>> eq = new ArrayList<>();
+			for (var slot : EquipmentSlot.values()) {
+				var item = nmsP.getItemBySlot(slot);
+				eq.add(new Pair<>(slot, item));
 			}
-			connection.a(new PacketPlayOutEntityEquipment(nmsP.at(), eq));
+			connection.send(new ClientboundSetEquipmentPacket(nmsP.getId(), eq));
 //			DataWatcher watcher = nmsP.getDataWatcher();
 //			Byte b = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
 //			watcher.set(DataWatcherRegistry.a.a(16), (byte) b);
-			connection.a(new PacketPlayOutEntityMetadata(nmsP.ae(), nmsP.ai(), true));
+			connection.send(new ClientboundSetEntityDataPacket(nmsP.getId(), nmsP.getEntityData(), true));
 			/*
 			 * List<Player> player = Arrays.asList(viewer);
 			 * Bukkit.getScheduler().runTask(plugin, new Runnable() { public void run() {
@@ -97,24 +92,20 @@ public class EntityHider implements Listener {
 			return hiddenBefore;
 		}
 		if (manager != null) {
-			EntityPlayer nmsP = ((CraftPlayer) entity).getHandle();
-			PlayerConnection connection = ((CraftPlayer) viewer).getHandle().b;
-			connection.a(new PacketPlayOutNamedEntitySpawn(nmsP));
-			connection.a(
-					new PacketPlayOutEntityHeadRotation(nmsP, (byte)
-							((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
-			List<Pair<EnumItemSlot, net.minecraft.world.item.ItemStack>> eq = new ArrayList<>();
-			for (var slot : EnumItemSlot.values()) {
-				var item = nmsP.b(slot);
-				if (item != null) {
-					eq.add(new Pair(slot, item));
-				}
+			var nmsP = ((CraftPlayer) entity).getHandle();
+			var connection = ((CraftPlayer) viewer).getHandle().connection;
+			connection.send(new ClientboundAddPlayerPacket(nmsP));
+			connection.send(new ClientboundRotateHeadPacket(nmsP, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
+			List<Pair<EquipmentSlot, net.minecraft.world.item.ItemStack>> eq = new ArrayList<>();
+			for (var slot : EquipmentSlot.values()) {
+				var item = nmsP.getItemBySlot(slot);
+				eq.add(new Pair<>(slot, item));
 			}
-			connection.a(new PacketPlayOutEntityEquipment(nmsP.ae(), eq));
+			connection.send(new ClientboundSetEquipmentPacket(nmsP.getId(), eq));
 //			DataWatcher watcher = nmsP.getDataWatcher();
 //			byte b = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
 //			watcher.set(DataWatcherRegistry.a.a(16), b);
-			connection.a(new PacketPlayOutEntityMetadata(nmsP.ae(), nmsP.ai(), true));
+			connection.send(new ClientboundSetEntityDataPacket(nmsP.getId(), nmsP.getEntityData(), true));
 		}
 		return hiddenBefore;
 	}
@@ -143,18 +134,17 @@ public class EntityHider implements Listener {
 			 * RuntimeException("Cannot send server packet.", e); }
 			 */
 			// EntityPlayer e = ((CraftPlayer) entity).getHandle();
-			PlayerConnection connection = ((CraftPlayer) observer).getHandle().b;
-			connection.a(new PacketPlayOutEntityDestroy(entity.getEntityId()));
+			var connection = ((CraftPlayer) observer).getHandle().connection;
+			connection.send(new ClientboundRemoveEntitiesPacket(entity.getEntityId()));
 		}
-		return;
 	}
 
 	public synchronized void forceHideEntity(Player observer, Player entity) {
 		if (observer.hasPermission("ms.walldebug")) return;
 		validate(observer, entity);
 		setVisibility(observer, entity.getEntityId(), false);
-		PlayerConnection connection = ((CraftPlayer) observer).getHandle().b;
-		connection.a(new PacketPlayOutEntityDestroy(entity.getEntityId()));
+		var connection = ((CraftPlayer) observer).getHandle().connection;
+		connection.send(new ClientboundRemoveEntitiesPacket(entity.getEntityId()));
 	}
 
 	public boolean isVisible(Player player, Entity entity) {
