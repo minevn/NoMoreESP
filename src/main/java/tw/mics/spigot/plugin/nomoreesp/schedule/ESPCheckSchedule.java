@@ -140,9 +140,12 @@ public class ESPCheckSchedule {
 		Location loc = player.getEyeLocation().clone().add(0, 1.125, 0); // 1.625 - 0.5
 		Location target_loc = target.getEyeLocation().clone().add(0, 0.5, 0); // 1 - 0.5
 		double width = 0.48;
-		Location targetAA = target.getLocation().clone().add(-width, 0, -width);
-		Location targetBB = target.getLocation().clone().add(width, 1.9, width);
-		Location targetCC = target.getLocation().clone().add(0, 1.1, 0);
+		// góc dưới cùng của bounding box
+		Location targetBottom = target.getLocation().clone().add(-width, 0, -width);
+		// góc trên cùng của bounding box
+		Location targetTop = target.getLocation().clone().add(width, 1.9, width);
+		// điểm giữa thân của target
+		Location targetCenter = target.getLocation().clone().add(0, 1.1, 0);
 		// int d = (int) player.getLocation().distance(target.getLocation());
 		double distance = loc.distance(target_loc);
 		if (distance > PLAYER_TRACKING_RANGE)
@@ -183,9 +186,11 @@ public class ESPCheckSchedule {
 
 		vector1.multiply(VECTOR_LENGTH);
 		try {
-			if (getTargetBlock(lookAt(player.getEyeLocation(), targetAA), target.getLocation(), game) != null
-					&& getTargetBlock(lookAt(player.getEyeLocation(), targetBB), target.getLocation(), game) != null
-					&& getTargetBlock(lookAt(player.getEyeLocation(), targetCC), target.getLocation(), game) != null) {
+			// kiểm tra player có nhìn thấy được 3 điểm bounding box của target
+			// (không có vật cản khi quét đến 3 điểm trên)
+			if (getTargetBlock(player.getEyeLocation(), targetBottom, game) != null
+					&& getTargetBlock(player.getEyeLocation(), targetTop, game) != null
+					&& getTargetBlock(player.getEyeLocation(), targetCenter, game) != null) {
 				hider.hideEntity(player, target);
 				return;
 			}
@@ -204,6 +209,12 @@ public class ESPCheckSchedule {
 		return hider;
 	}
 
+	/**
+	 * Tính yaw/pitch để nhìn từ tọa gốc tới tọa độ đích
+	 * @param loc tọa độ gốc
+	 * @param lookat tọa độ đích
+	 * @return tọa độ gốc kèm theo yaw/pitch
+	 */
 	public Location lookAt(Location loc, Location lookat) {
 		double dx = lookat.getX() - loc.getX();
 		double dy = lookat.getY() - loc.getY();
@@ -229,47 +240,77 @@ public class ESPCheckSchedule {
 		return loc;
 	}
 
-	public Block getTargetBlock(Location direction, Location l, Game game) {
-		direction = direction.clone();
-		double radians = Math.toRadians(direction.getYaw() + 90.0);
-		double radians2 = Math.toRadians(direction.getPitch() + 90.0f);
+	/**
+	 * Lấy target block từ hướng nhìn
+	 * @param original tọa độ gốc có yaw/pitch hướng nhìn
+	 * @param target tọa độ đích
+	 * @param game
+	 * @return block nhìn thấy
+	 */
+	public Block getTargetBlock(Location original, Location target, Game game) {
+		// bổ sung yaw/pitch nhìn về tọa độ đích
+		original = lookAt(original, target).clone();
+		double radians = Math.toRadians(original.getYaw() + 90.0);
+		double radians2 = Math.toRadians(original.getPitch() + 90.0f);
 		double n2 = Math.sin(radians2) * Math.cos(radians);
 		double cos = Math.cos(radians2);
 		double z2 = Math.sin(radians2) * Math.sin(radians);
-		double x = direction.getX();
-		double y = direction.getY();
-		double z = direction.getZ();
-		double n = 0.1, d = direction.distance(l);
-		while (d - n > 0.1) {
-//			AsyncWorld w = AsyncWorld.wrap(direction.getWorld());
-			World w = direction.getWorld();
-			Block block = w.getBlockAt(direction);
+		double x = original.getX(); // x gốc
+		double y = original.getY(); // y gốc
+		double z = original.getZ(); // z gốc
+		double n = 0.1; // bước nhảy
+		double d = original.distance(target); // khoảng cách tọa độ gốc tới tọa độ đích
+		while (d - n > 0.1) { // nhảy từ tọa độ gốc tới tọa độ đích
+			World w = original.getWorld();
+			Block block = w.getBlockAt(original);
 			Material m = block.getType();
-			if ((!block.isEmpty() && !block.isLiquid() && hasIntersection(block, direction.toVector())
-					&& !m.isTransparent() && m != Material.BARRIER && !m.name().contains("FENCE")
-					&& !m.name().endsWith("TRAPDOOR")) && m != Material.IRON_BARS && !m.name().contains("GLASS")
-					|| (m == Material.WHEAT && !game.isZombieGame()))
+
+			// logic rối nùi
+			if (!(block.isEmpty() || block.isLiquid() || !hasIntersection(block, original.toVector())
+					|| m.isTransparent() || m == Material.BARRIER || m.name().contains("FENCE")
+					|| m.name().endsWith("TRAPDOOR") || m == Material.IRON_BARS || m.name().contains("GLASS")
+					|| (m == Material.WHEAT && game.isZombieGame()) || m.name().endsWith("STAIRS"))) {
 				return block;
-			direction.setX(x + n * n2);
-			direction.setY(y + n * cos);
-			direction.setZ(z + n * z2);
+			}
+
+			// tiến original theo hướng yaw/pitch theo bước nhảy n
+			original.setX(x + n * n2);
+			original.setY(y + n * cos);
+			original.setZ(z + n * z2);
 			n += 0.1;
 		}
 		return null;
 	}
 
+	/**
+	 * Kiểm tra position có nằm trong bounding block
+	 * @param b
+	 * @param position
+	 * @return true nếu position có nằm trong block
+	 */
 	public boolean hasIntersection(Block b, Vector position) {
 		BoundingBox box = b.getBoundingBox();
 		return hasIntersection(box.getMin(), box.getMax(), position);
 	}
 
+	/**
+	 * Kiểm tra position có nằm trong bounding box
+	 * @param min
+	 * @param max
+	 * @param position
+	 * @return true nếu position có nằm trong bounding box
+	 */
+	@SuppressWarnings("RedundantIfStatement")
 	public boolean hasIntersection(Vector min, Vector max, Vector position) {
-		if (position.getX() < min.getX() || position.getX() > max.getX())
+		if (position.getX() < min.getX() || position.getX() > max.getX()) {
 			return false;
-		if (position.getY() < min.getY() || position.getY() > max.getY())
+		}
+		if (position.getY() < min.getY() || position.getY() > max.getY()) {
 			return false;
-		if (position.getZ() < min.getZ() || position.getZ() > max.getZ())
+		}
+		if (position.getZ() < min.getZ() || position.getZ() > max.getZ()) {
 			return false;
+		}
 		return true;
 	}
 }
