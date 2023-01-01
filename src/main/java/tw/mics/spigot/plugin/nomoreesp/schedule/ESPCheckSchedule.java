@@ -265,11 +265,13 @@ public class ESPCheckSchedule {
 			Block block = w.getBlockAt(original);
 			Material m = block.getType();
 
+			if (m == Material.WHEAT && !game.isZombieGame()) return block;
+
 			// logic rối nùi
 			if (!(block.isEmpty() || block.isLiquid() || !hasIntersection(block, original.toVector())
 					|| m.isTransparent() || m == Material.BARRIER || m.name().contains("FENCE")
 					|| m.name().endsWith("TRAPDOOR") || m == Material.IRON_BARS || m.name().contains("GLASS")
-					|| (m == Material.WHEAT && game.isZombieGame()) || m.name().endsWith("STAIRS"))) {
+					|| m.name().endsWith("STAIRS"))) {
 				return block;
 			}
 
