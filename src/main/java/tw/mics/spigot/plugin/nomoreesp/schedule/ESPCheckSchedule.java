@@ -140,10 +140,16 @@ public class ESPCheckSchedule {
 		Location loc = player.getEyeLocation().clone().add(0, 1.125, 0); // 1.625 - 0.5
 		Location target_loc = target.getEyeLocation().clone().add(0, 0.5, 0); // 1 - 0.5
 		double width = 0.48;
-		// góc dưới cùng của bounding box
-		Location targetBottom = target.getLocation().clone().add(-width, 0, -width);
-		// góc trên cùng của bounding box
-		Location targetTop = target.getLocation().clone().add(width, 1.9, width);
+		// 4 góc dưới chân bounding box
+		Location targetBottom1 = target.getLocation().clone().add(-width, 0, -width);
+		Location targetBottom2 = target.getLocation().clone().add(width, 0, width);
+		Location targetBottom3 = target.getLocation().clone().add(-width, 0, width);
+		Location targetBottom4 = target.getLocation().clone().add(-width, 0, -width);
+		// 4 góc trên cùng của bounding box
+		Location targetTop1 = target.getLocation().clone().add(width, 1.9, width);
+		Location targetTop2 = target.getLocation().clone().add(-width, 1.9, -width);
+		Location targetTop3 = target.getLocation().clone().add(width, 1.9, -width);
+		Location targetTop4 = target.getLocation().clone().add(-width, 1.9, width);
 		// điểm giữa thân của target
 		Location targetCenter = target.getLocation().clone().add(0, 1.1, 0);
 		// int d = (int) player.getLocation().distance(target.getLocation());
@@ -188,9 +194,17 @@ public class ESPCheckSchedule {
 		try {
 			// kiểm tra player có nhìn thấy được 3 điểm bounding box của target
 			// (không có vật cản khi quét đến 3 điểm trên)
-			if (getTargetBlock(player.getEyeLocation(), targetBottom, game) != null
-					&& getTargetBlock(player.getEyeLocation(), targetTop, game) != null
-					&& getTargetBlock(player.getEyeLocation(), targetCenter, game) != null) {
+			if (
+				getTargetBlock(player.getEyeLocation(), targetBottom1, game) != null
+				&& getTargetBlock(player.getEyeLocation(), targetBottom2, game) != null
+				&& getTargetBlock(player.getEyeLocation(), targetBottom3, game) != null
+				&& getTargetBlock(player.getEyeLocation(), targetBottom4, game) != null
+				&& getTargetBlock(player.getEyeLocation(), targetTop1, game) != null
+				&& getTargetBlock(player.getEyeLocation(), targetTop2, game) != null
+				&& getTargetBlock(player.getEyeLocation(), targetTop3, game) != null
+				&& getTargetBlock(player.getEyeLocation(), targetTop4, game) != null
+				&& getTargetBlock(player.getEyeLocation(), targetCenter, game) != null
+			) {
 				hider.hideEntity(player, target);
 				return;
 			}
