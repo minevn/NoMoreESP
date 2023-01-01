@@ -46,3 +46,43 @@ tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.name()
 //    options.compilerArgs.add("-Xlint:deprecation")
 }
+
+tasks {
+    var jarName = ""
+
+    jar {
+        jarName = archiveFileName.get()
+    }
+
+    register("customCopy") {
+        dependsOn(reobfJar)
+
+        val path = project.properties["shadowPath"]
+
+        if (path != null) {
+            doLast {
+                println("Copying $jarName to $path")
+                val to = File("$path/$jarName")
+                val rename = File("$path/NoMoreESP.jar")
+                File(project.projectDir, "build/libs/$jarName").copyTo(to, true)
+                if (rename.exists()) rename.delete()
+                to.renameTo(rename)
+                println("Copied")
+            }
+        }
+    }
+
+    assemble {
+        dependsOn(get("customCopy"))
+    }
+
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
+    }
+
+    compileJava {
+        options.release.set(17)
+    }
+}
