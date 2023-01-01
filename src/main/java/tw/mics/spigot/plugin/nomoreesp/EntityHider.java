@@ -219,7 +219,7 @@ public class EntityHider implements Listener {
 		removeEntity(e.getEntity());
 	}
 
-	@EventHandler(ignoreCancelled = true)
+//	@EventHandler(ignoreCancelled = true)
 	private void onChunkUnload(ChunkUnloadEvent e) {
 		for (Entity entity : e.getChunk().getEntities().clone()) {
 			removeEntity(entity);
