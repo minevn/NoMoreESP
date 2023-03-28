@@ -192,8 +192,8 @@ public class ESPCheckSchedule {
 
 		vector1.multiply(VECTOR_LENGTH);
 		try {
-			// kiểm tra player có nhìn thấy được 3 điểm bounding box của target
-			// (không có vật cản khi quét đến 3 điểm trên)
+			// kiểm tra player có nhìn thấy được các điểm bounding box của target
+			// (không có vật cản khi quét đến các điểm trên)
 			if (
 				getTargetBlock(player.getEyeLocation(), targetBottom1, game) != null
 				&& getTargetBlock(player.getEyeLocation(), targetBottom2, game) != null
