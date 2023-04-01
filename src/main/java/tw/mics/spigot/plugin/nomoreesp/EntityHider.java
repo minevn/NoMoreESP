@@ -7,10 +7,13 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.base.Preconditions;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.network.protocol.game.*;
+import net.minecraft.network.protocol.game.ClientboundAddPlayerPacket;
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_19_R3.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -61,7 +64,8 @@ public class EntityHider implements Listener {
 		// Resend packets
 		if (manager != null && hiddenBefore) {
 			var nmsP = ((CraftPlayer) entity).getHandle();
-			var connection = ((CraftPlayer) viewer).getHandle().connection;
+			var nmsViewer = ((CraftPlayer) viewer).getHandle();
+			var connection = nmsViewer.connection;
 			connection.send(new ClientboundAddPlayerPacket(nmsP));
 			connection.send(new ClientboundRotateHeadPacket(nmsP, (byte) ((entity.getLocation().getYaw() * 256.0F) / 360.0F)));
 			List<Pair<EquipmentSlot, ItemStack>> eq = new ArrayList<>();
@@ -73,7 +77,7 @@ public class EntityHider implements Listener {
 //			DataWatcher watcher = nmsP.getDataWatcher();
 //			Byte b = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
 //			watcher.set(DataWatcherRegistry.a.a(16), (byte) b);
-			connection.send(new ClientboundSetEntityDataPacket(nmsP.getId(), nmsP.getEntityData(), true));
+			nmsP.getEntityData().refresh(nmsViewer);
 			/*
 			 * List<Player> player = Arrays.asList(viewer);
 			 * Bukkit.getScheduler().runTask(plugin, new Runnable() { public void run() {
@@ -105,7 +109,7 @@ public class EntityHider implements Listener {
 //			DataWatcher watcher = nmsP.getDataWatcher();
 //			byte b = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
 //			watcher.set(DataWatcherRegistry.a.a(16), b);
-			connection.send(new ClientboundSetEntityDataPacket(nmsP.getId(), nmsP.getEntityData(), true));
+//			connection.send(new ClientboundSetEntityDataPacket(nmsP.getId(), nmsP.getEntityData().getNonDefaultValues()));
 		}
 		return hiddenBefore;
 	}

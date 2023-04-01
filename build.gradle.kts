@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    paperDevBundle("1.19.2-R0.1-SNAPSHOT")
+    paperDevBundle("1.19.4-R0.1-SNAPSHOT")
     compileOnly("io.papermc.paper:paper-api:1.19.2-R0.1-SNAPSHOT")
 
     compileOnly("net.minevn:MineStrike:3.0")
